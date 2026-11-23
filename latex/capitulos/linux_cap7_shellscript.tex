@@ -1,0 +1,103 @@
+\chapter{\textit{Shell Script} (Capítulo 7 do livro)}\label{cap:linux7}
+
+Um \textit{shell script} é um arquivo de texto com comandos que o interpretador
+\textit{Bash} executa em sequência \cite{peixoto2013}. Nesta seção os \textit{scripts} usam
+parâmetros (\texttt{\$1}, \texttt{\$2}, \texttt{\$\#}), estruturas condicionais
+(\texttt{if}/\texttt{elif}/\texttt{else}), expressões regulares e a estrutura de seleção
+\texttt{case}\footnote{Manual oficial do \textit{Bash}. Disponível em:
+\url{https://www.gnu.org/software/bash/manual/bash.html}. Acesso em: 13 nov. 2026.}.
+
+Antes de executar um \textit{script} é preciso dar a ele permissão de execução com
+\texttt{chmod +x nome.sh}. Depois, ele é chamado com \texttt{./nome.sh}.
+
+% =====================================================================
+\section{Atividade 7.6: ainda usando \texttt{grep}}\label{sec:a76}
+
+\textbf{Enunciado:} criar um arquivo de texto chamado \texttt{agenda} com nomes e telefones e desenvolver um \textit{script} que receba um nome como parâmetro e utilize o comando \texttt{grep} para buscar o contato.
+
+O arquivo \texttt{agenda} contém os registros de contatos (um por linha, com nome e telefone), e o \textit{script} \texttt{agenda.sh} (\autoref{lst:agenda}) verifica primeiro se foi passado exatamente um parâmetro (\texttt{\$\# -ne 1}). Em seguida, executa \texttt{grep -i "\$1" agenda} para localizar o nome informado ignorando diferenças entre maiúsculas e minúsculas, exibindo uma mensagem conforme o resultado.
+
+\lstinputlisting[caption={Atividade 7.6 (\texttt{agenda.sh})},label={lst:agenda}]{scripts/agenda.sh}
+
+A execução do \textit{script} no terminal, testando um contato existente e um inexistente, é apresentada na \autoref{fig:a76}.
+
+\printterminal{atividade7_6.png}{Execução da Atividade 7.6}{fig:a76}
+
+% =====================================================================
+\section{Atividade 7.9: utilizando expressões regulares}\label{sec:a79}
+
+\subsection{Parte 1: palavra contida em outra}\label{subsec:a79p1}
+
+\textbf{Enunciado:} criar um \textit{script} que recebe duas palavras como parâmetro e verifica
+se a primeira está contida na segunda.
+
+\lstinputlisting[caption={Atividade 7.9, parte 1 (\texttt{contida.sh})},label={lst:contida}]{scripts/contida.sh}
+
+O \autoref{lst:contida} primeiro confere, com \texttt{\$\# -ne 2}, se foram passados
+exatamente dois parâmetros. Caso contrário, mostra como usar o \textit{script} e encerra com
+\texttt{exit 1}. Em seguida, o teste \lstinline[frame=none,numbers=none]{[[ "$2" =~ "$1" ]]} usa o operador
+de expressão regular \lstinline[frame=none,numbers=none]{=~} para verificar se o texto de \texttt{\$1} aparece em
+qualquer posição de \texttt{\$2}. Como \texttt{\$1} está entre aspas, ele é tratado como texto
+literal, e não como padrão. A execução aparece na \autoref{fig:a79p1}.
+
+\printterminal{atividade7_9_parte1.png}{Execução da Atividade 7.9, parte 1}{fig:a79p1}
+
+\subsection{Parte 2: informações de um arquivo texto}\label{subsec:a79p2}
+
+\textbf{Enunciado:} criar um \textit{script} que recebe o nome de um arquivo texto, verifica se o
+usuário tem permissão de leitura e, se tiver, mostra o número de caracteres, de palavras e
+de linhas usando o comando \texttt{wc}.
+
+\lstinputlisting[caption={Atividade 7.9, parte 2 (\texttt{infoarq.sh})},label={lst:infoarq}]{scripts/infoarq.sh}
+
+No \autoref{lst:infoarq}, o teste \texttt{-e} verifica se o arquivo existe e o teste
+\texttt{-r} verifica se o usuário atual pode lê-lo. As opções do \texttt{wc} usadas estão na
+\autoref{tab:wc}. A entrada é redirecionada com \texttt{<} para que o \texttt{wc} imprima só o
+número, sem repetir o nome do arquivo.
+
+\begin{table}[H]
+    \centering
+    \caption{Opções do comando \texttt{wc} usadas na Atividade 7.9}
+    \label{tab:wc}
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Opção} & \textbf{O que conta} \\
+        \midrule
+        \texttt{wc -m} & caracteres \\
+        \texttt{wc -w} & palavras \\
+        \texttt{wc -l} & linhas \\
+        \bottomrule
+    \end{tabular}
+    \legend{Fonte: adaptado de \citeonline{peixoto2013}.}
+\end{table}
+
+Para testar a falta de permissão, a leitura do arquivo foi retirada com
+\texttt{chmod -r teste.txt}. Nesse caso o \textit{script} avisa que o usuário não pode ler o
+arquivo, como mostra a \autoref{fig:a79p2}.
+
+\printterminal{atividade7_9_parte2.png}{Execução da Atividade 7.9, parte 2}{fig:a79p2}
+
+% =====================================================================
+\section{Atividade 7.11: utilizando \texttt{case} com menu de opções}\label{sec:a711}
+
+\textbf{Enunciado:} criar um \textit{script} que mostra um menu com as opções 1)~uso das
+partições (\texttt{df -h}); 2)~usuários logados; 3)~data e hora (\texttt{date});
+4)~sair. O \textit{script} deve executar o comando escolhido e avisar quando a opção digitada
+não existir.
+
+\lstinputlisting[caption={Atividade 7.11 (\texttt{menu.sh})},label={lst:menu}]{scripts/menu.sh}
+
+No \autoref{lst:menu}, o comando \texttt{read} guarda o que o usuário digitou na variável
+\texttt{opcao}. O \texttt{case} compara essa variável com cada padrão (\texttt{1)}, \texttt{2)},
+\texttt{3)} e \texttt{4)}) e executa apenas o bloco correspondente; cada bloco termina com
+\texttt{;;}. O padrão \texttt{*)} funciona como ``qualquer outro valor'' e trata as opções
+inválidas. A opção 1 mostra o uso das partições do disco, assunto do
+\autoref{cap:particoes}. Na opção 2 foi usado o comando \texttt{w} no lugar do \texttt{who}:
+nas versões recentes do Ubuntu, a sessão gráfica (GNOME) não é registrada no arquivo lido pelo
+\texttt{who}, que fica vazio. O \texttt{w} mostra o mesmo usuário logado, com o terminal
+(\texttt{tty2}), o horário de \textit{login} e o que ele está executando. As
+Figuras~\ref{fig:a711a} a~\ref{fig:a711c} mostram cada opção executada.
+
+\printterminal{atividade7_11_opcao1.png}{Atividade 7.11: opção 1 (\texttt{df -h})}{fig:a711a}
+\printterminal{atividade7_11_opcao2e3.png}{Atividade 7.11: opções 2 (\texttt{w}) e 3 (\texttt{date})}{fig:a711b}
+\printterminal{atividade7_11_invalida_sair.png}{Atividade 7.11: opção inválida e opção 4 (sair)}{fig:a711c}

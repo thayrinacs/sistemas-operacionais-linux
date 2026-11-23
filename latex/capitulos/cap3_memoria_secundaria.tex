@@ -1,0 +1,84 @@
+% ==== Responsável: Mariana Nunes Pignaton ====
+\chapter{Memória secundária e partições}\label{cap:particoes}\label{cap:memoria-sec}
+
+A memória secundária é responsável pelo armazenamento permanente de dados e programas.
+Diferentemente da memória principal (RAM), ela mantém as informações mesmo com o computador
+desligado. Nela ficam o sistema operacional, os aplicativos e os arquivos dos usuários. Em
+troca, o acesso é bem mais lento que o da RAM, por isso o sistema operacional precisa
+organizar e escalonar o uso dos discos \cite{silberschatz2015}.
+
+\section{Tipos de dispositivos de armazenamento}\label{sec:tipos-armazenamento}
+
+\begin{itemize}
+    \item \textbf{Disco rígido (HD):} usa discos magnéticos que giram, com cabeçotes de leitura
+    e escrita que se movem até a trilha desejada. É mais lento que o SSD, mas continua sendo
+    usado pela grande capacidade e pelo custo menor por \textit{gigabyte}.
+    \item \textbf{Unidade de estado sólido (SSD):} usa memória \textit{flash}, sem partes
+    mecânicas. Por não ter tempo de busca nem de rotação, é muito mais rápido que o HD, o que
+    acelera o \textit{boot} e a abertura de programas.
+    \item \textbf{Dispositivos removíveis:} \textit{pendrives}, cartões de memória e HDs
+    externos, usados para transportar arquivos e fazer cópias de segurança.
+\end{itemize}
+
+\section{Particionamento de discos}\label{sec:particionamento}
+
+O particionamento divide um dispositivo de armazenamento em partes independentes, chamadas
+partições. Cada partição pode ter o seu próprio sistema de arquivos e ser usada para guardar
+dados ou para instalar um sistema operacional. Isso permite, por exemplo, separar os arquivos
+pessoais (\texttt{/home}) dos arquivos do sistema, ou instalar dois sistemas operacionais no
+mesmo disco \cite{tanenbaum2016}.
+
+No esquema MBR existem três tipos de partição:
+
+\begin{itemize}
+    \item \textbf{primária:} pode guardar um sistema operacional ou arquivos do usuário;
+    \item \textbf{estendida:} funciona como um contêiner que permite criar partições lógicas;
+    \item \textbf{lógica:} é criada dentro de uma partição estendida.
+\end{itemize}
+
+\subsection{Esquemas MBR e GPT}\label{subsec:mbr-gpt}
+
+MBR e GPT são os dois padrões usados para guardar a tabela de partições de um disco. A
+\autoref{tab:mbr-gpt} compara os dois.
+
+\begin{table}[H]
+    \centering
+    \caption{Comparação entre os esquemas de partição MBR e GPT}
+    \label{tab:mbr-gpt}
+    \begin{tabularx}{\linewidth}{lXX}
+        \toprule
+        \textbf{Característica} & \textbf{MBR} & \textbf{GPT} \\
+        \midrule
+        Onde fica a tabela & Primeiro setor do disco (512 bytes) & Início do disco, com cópia de segurança no final \\
+        Partições & Até 4 primárias (ou 3 primárias e 1 estendida) & 128 por padrão \\
+        Tamanho máximo do disco & Cerca de 2\,TiB & Acima de 2\,TiB \\
+        \textit{Firmware} típico & BIOS & UEFI \\
+        \bottomrule
+    \end{tabularx}
+    \legend{Fonte: os autores (2026), com base em \citeonline{tanenbaum2016}.}
+\end{table}
+
+O MBR é o padrão mais antigo e tem limites de tamanho de disco e de número de partições. O GPT
+é o padrão atual dos computadores com UEFI (ver \autoref{tab:bios-uefi}, no
+\autoref{cap:boot}).
+
+\section{Gerenciamento de partições no Linux}\label{sec:particoes-linux}
+
+O Linux tem comandos para ver e administrar os dispositivos de armazenamento e as suas
+partições, reunidos no \autoref{lst:particoes}. O \texttt{lsblk}\footnote{Manual do comando
+\texttt{lsblk}. Disponível em: \url{https://man7.org/linux/man-pages/man8/lsblk.8.html}.
+Acesso em: 20 nov. 2026.} mostra os discos e as partições em forma de árvore (por exemplo,
+\texttt{sda}, \texttt{sda1}, \texttt{sda2}). O \texttt{fdisk -l} mostra a tabela de partições
+de cada disco. O \texttt{df -h} mostra o espaço usado e livre em cada sistema de arquivos
+montado, e o \texttt{du -sh} mostra quanto espaço um diretório ocupa.
+
+\begin{lstlisting}[caption={Comandos para consultar discos e partições no Linux},label={lst:particoes}]
+lsblk                  # discos e particoes em arvore
+sudo fdisk -l          # tabela de particoes de cada disco
+df -h                  # espaco usado e livre em cada sistema de arquivos
+du -sh ~/Documentos    # espaco ocupado por um diretorio
+\end{lstlisting}
+
+O comando \texttt{df -h} também foi usado na opção 1 do menu da Atividade 7.11
+(\autoref{fig:a711a}), em que aparecem a partição \texttt{/dev/sda2}, montada na raiz
+(\texttt{/}), e sistemas de arquivos temporários na memória (\texttt{tmpfs}).

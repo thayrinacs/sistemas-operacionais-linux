@@ -1,0 +1,116 @@
+% ==== Responsável: Kaike Costa Alves ====
+\chapter{Grupos, usuários, poderes e permissões}\label{cap:permissoes}
+
+O Linux é um sistema multiusuário: várias pessoas podem usar o mesmo computador, cada uma com
+a sua conta. Cada usuário tem um identificador numérico (UID), pertence a um ou mais grupos
+(GID) e recebe permissões específicas para ler, alterar e executar arquivos. Essa separação é
+a base da segurança do sistema \cite{silberschatz2015}.
+
+\section{Gerenciamento de usuários}\label{sec:usuarios}
+
+As contas ficam registradas no arquivo \texttt{/etc/passwd}, em que cada linha traz o nome do
+usuário, o UID, o GID, o diretório pessoal e o \textit{shell}, separados por dois-pontos. As
+senhas criptografadas ficam em \texttt{/etc/shadow}, que só o administrador pode ler. O
+\autoref{lst:usuarios} mostra os comandos de criação, alteração e exclusão de contas.
+
+\begin{lstlisting}[caption={Gerenciamento de usuários},label={lst:usuarios}]
+sudo useradd -m usuario1           # cria o usuario (com diretorio pessoal)
+sudo passwd usuario1               # define a senha
+sudo usermod -aG sudo usuario1     # adiciona ao grupo sudo
+sudo userdel -r usuario1           # exclui o usuario e o diretorio pessoal
+\end{lstlisting}
+
+No exemplo do \texttt{usermod}, a opção \texttt{-aG} acrescenta o usuário a um grupo sem
+tirá-lo dos grupos em que já está. Ao entrar no grupo \texttt{sudo}, ele passa a poder usar
+privilégios de administrador.
+
+\section{Gerenciamento de grupos}\label{sec:grupos}
+
+Os grupos reúnem usuários para dar permissões a todos de uma vez. Por exemplo, todos os alunos
+de uma turma podem ler a pasta de materiais se ela pertencer ao grupo \texttt{estudantes}. Os
+grupos ficam em \texttt{/etc/group}.
+
+\begin{lstlisting}[caption={Gerenciamento de grupos},label={lst:grupos}]
+sudo groupadd estudantes              # cria o grupo
+sudo usermod -aG estudantes usuario1  # coloca o usuario no grupo
+groups usuario1                       # mostra os grupos do usuario
+sudo groupdel estudantes              # exclui o grupo
+\end{lstlisting}
+
+\section{Administrador (\texttt{root}) e o comando \texttt{sudo}}\label{sec:root-sudo}
+
+O administrador do Linux é o usuário \texttt{root} (UID 0), que não tem restrições: pode
+instalar programas, mudar configurações, gerenciar usuários e acessar qualquer arquivo. Para
+não trabalhar o tempo todo como \texttt{root}, os usuários autorizados usam o
+\texttt{sudo}\footnote{Manual do comando \texttt{sudo}. Disponível em:
+\url{https://www.sudo.ws/docs/man/sudo.man/}. Acesso em: 20 nov. 2026.}, que executa só aquele
+comando com privilégios de administrador e pede a senha do próprio usuário (por exemplo,
+\texttt{sudo apt update}). Esse recurso deve ser usado com cuidado, porque um comando
+administrativo errado pode comprometer o sistema inteiro.
+
+\section{Permissões de arquivos e diretórios}\label{sec:permissoes-arquivos}
+
+Cada arquivo tem um dono e um grupo, e as permissões são definidas para três categorias:
+
+\begin{itemize}
+    \item \textbf{dono} (\texttt{u}): o usuário proprietário do arquivo;
+    \item \textbf{grupo} (\texttt{g}): os usuários do grupo do arquivo;
+    \item \textbf{outros} (\texttt{o}): todos os demais usuários.
+\end{itemize}
+
+Para cada categoria existem três permissões: \textbf{leitura} (\texttt{r}), \textbf{escrita}
+(\texttt{w}) e \textbf{execução} (\texttt{x}). Em um diretório, \texttt{r} permite listar o
+conteúdo, \texttt{w} permite criar e apagar arquivos dentro dele e \texttt{x} permite entrar
+nele com \texttt{cd}.
+
+O \texttt{ls -l} mostra as permissões na primeira coluna, como nesta linha:
+
+\begin{center}
+    \texttt{-rw-r-{}-r-{}- 1 usuario1 estudantes 1200 arquivo.txt}
+\end{center}
+
+\noindent O primeiro caractere indica o
+tipo (\texttt{-} para arquivo comum e \texttt{d} para diretório). Depois vêm três blocos de três
+letras: o dono pode ler e escrever (\texttt{rw-}), e o grupo e os outros só podem ler
+(\texttt{r-{}-}).
+
+\section{Representação numérica e o comando \texttt{chmod}}\label{sec:chmod}
+
+Cada permissão também tem um valor: leitura vale 4, escrita vale 2 e execução vale 1. A soma dá
+um dígito de 0 a 7 para cada categoria, como mostra a \autoref{tab:permissoes}.
+
+\begin{table}[H]
+    \centering
+    \caption{Exemplos de permissões numéricas no Linux}
+    \label{tab:permissoes}
+    \begin{tabularx}{\linewidth}{cccX}
+        \toprule
+        \textbf{Valor} & \textbf{Dono} & \textbf{Grupo e outros} & \textbf{Uso comum} \\
+        \midrule
+        777 & \texttt{rwx} & \texttt{rwx} / \texttt{rwx} & Acesso total para todos (inseguro). \\
+        755 & \texttt{rwx} & \texttt{r-x} / \texttt{r-x} & \textit{Scripts} e diretórios públicos. \\
+        644 & \texttt{rw-} & \texttt{r-{}-} / \texttt{r-{}-} & Arquivos de texto comuns. \\
+        700 & \texttt{rwx} & \texttt{-{}-{}-} / \texttt{-{}-{}-} & Arquivos privados do dono. \\
+        \bottomrule
+    \end{tabularx}
+    \legend{Fonte: os autores (2026).}
+\end{table}
+
+O \texttt{chmod} altera as permissões, tanto em forma numérica quanto com letras
+(\autoref{lst:chmod}). Ele foi usado na Atividade 7.9 para tirar e devolver a permissão de
+leitura do arquivo \texttt{teste.txt} (\autoref{fig:a79p2}) e em todas as atividades para dar
+permissão de execução aos \textit{scripts}.
+
+\begin{lstlisting}[caption={Alteração de permissões, dono e grupo},label={lst:chmod}]
+chmod 755 script.sh                     # rwx r-x r-x
+chmod 644 documento.txt                 # rw- r-- r--
+chmod u+x script.sh                     # da execucao ao dono
+chmod g-w documento.txt                 # tira a escrita do grupo
+sudo chown usuario1 arquivo.txt         # muda o dono
+sudo chown usuario1:estudantes arq.txt  # muda dono e grupo
+sudo chgrp estudantes arquivo.txt       # muda so o grupo
+\end{lstlisting}
+
+O controle de usuários, grupos e permissões impede que pessoas sem autorização leiam ou alterem
+informações. A separação entre usuários comuns e o administrador também reduz o estrago que um
+erro ou um programa malicioso pode causar no sistema.

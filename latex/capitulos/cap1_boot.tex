@@ -1,0 +1,92 @@
+% ==== Responsável: Letícia Storch ====
+\chapter{Processo de \textit{boot}}\label{cap:boot}
+
+O \textit{boot} (ou inicialização) é o conjunto de etapas que leva o computador do estado
+desligado até um sistema operacional pronto para uso. Como a memória principal é volátil, o
+\textit{hardware} precisa localizar, em algum dispositivo de armazenamento, o código capaz de
+carregar o núcleo (\textit{kernel}) na memória e entregar-lhe o controle \cite{tanenbaum2016}.
+
+\section{Etapas da inicialização}\label{sec:etapas-boot}
+
+Ao ligar a máquina, o processador começa a executar um código gravado em memória não volátil:
+o \textbf{\textit{firmware}}, que pode ser a BIOS (modo legado) ou a
+UEFI\footnote{Especificações UEFI. Disponível em: \url{https://uefi.org/specifications}. Acesso
+em: 19 nov. 2026.}. O \textit{firmware} executa o POST (\textit{Power-On Self Test}), que testa
+componentes básicos como memória e teclado, e em seguida procura um dispositivo de
+\textit{boot}. A \autoref{fig:boot} resume o fluxo e a \autoref{tab:bios-uefi} compara os dois
+tipos de \textit{firmware}.
+
+\begin{figure}[H]
+    \centering
+    \caption{Fluxo simplificado do processo de \textit{boot} no Linux}
+    \label{fig:boot}
+    \begin{tikzpicture}[node distance=6mm and 8mm,
+        box/.style={rectangle, draw, rounded corners, align=center, fill=gray!10,
+                    minimum width=2.6cm, minimum height=1cm, font=\small},
+        arr/.style={->, >=stealth, thick}]
+        \node[box] (fw) {\textit{Firmware}\\BIOS/UEFI};
+        \node[box, right=of fw] (post) {POST};
+        \node[box, right=of post] (bl) {\textit{Bootloader}\\(GRUB)};
+        \node[box, below=of bl] (k) {\textit{Kernel}\\+ \textit{initramfs}};
+        \node[box, left=of k] (init) {\textit{Init}\\(\texttt{systemd})};
+        \node[box, left=of init] (user) {Espaço do\\usuário};
+        \draw[arr] (fw) -- (post);
+        \draw[arr] (post) -- (bl);
+        \draw[arr] (bl) -- (k);
+        \draw[arr] (k) -- (init);
+        \draw[arr] (init) -- (user);
+    \end{tikzpicture}
+    \legend{Fonte: os autores (2026).}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{Comparação entre BIOS e UEFI}
+    \label{tab:bios-uefi}
+    \begin{tabularx}{\linewidth}{lXX}
+        \toprule
+        \textbf{Característica} & \textbf{BIOS (legado)} & \textbf{UEFI} \\
+        \midrule
+        Esquema de partição & MBR & GPT (também aceita MBR) \\
+        Tamanho máximo de disco & Cerca de 2\,TiB & Acima de 2\,TiB \\
+        Local do \textit{bootloader} & Primeiro setor do disco (MBR, 512 bytes) & Partição de sistema EFI (ESP, em FAT) \\
+        Interface de configuração & Texto & Texto ou gráfica \\
+        \textit{Secure Boot} & Não & Sim \\
+        \bottomrule
+    \end{tabularx}
+    \legend{Fonte: os autores (2026), com base em \citeonline{silberschatz2015}.}
+\end{table}
+
+\section{\textit{Bootloader}}\label{sec:bootloader}
+
+O \textit{bootloader} é o programa responsável por carregar o \textit{kernel}. No Linux, o mais
+comum é o GRUB\footnote{Manual do GRUB. Disponível em:
+\url{https://www.gnu.org/software/grub/manual/grub/}. Acesso em: 19 nov. 2026.}, que permite
+escolher entre os sistemas instalados e passar parâmetros ao \textit{kernel}. Ele carrega também
+o \textit{initramfs}, um sistema de arquivos temporário na memória com os \textit{drivers}
+necessários para montar o sistema de arquivos raiz.
+
+O menu do GRUB também dá acesso ao \textbf{modo de recuperação} (\textit{recovery mode}) do
+Ubuntu, que inicia o sistema com o mínimo de serviços e oferece um terminal de administrador.
+Nesse modo, o sistema de arquivos raiz é montado apenas para leitura e precisa ser remontado
+com \texttt{mount -o remount,rw /} antes de qualquer alteração, como a troca de uma senha
+esquecida com \texttt{passwd}.
+
+\section{\textit{Kernel} e processo \texttt{init}}\label{sec:init}
+
+Com o \textit{kernel} na memória, ele inicializa os dispositivos, monta o sistema de arquivos
+raiz e cria o primeiro processo do espaço do usuário (PID~1). Nas distribuições modernas, esse
+processo é o \texttt{systemd}, que inicia os serviços em paralelo e define o estado final do
+sistema (por exemplo, modo gráfico ou modo texto). Os principais passos, em ordem, são:
+
+\begin{enumerate}
+    \item o \textit{firmware} executa o POST e localiza o dispositivo de \textit{boot};
+    \item o \textit{bootloader} é carregado e exibe o menu de opções;
+    \item o \textit{kernel} e o \textit{initramfs} são carregados na memória;
+    \item o \textit{kernel} monta o sistema de arquivos raiz;
+    \item o \texttt{init}/\texttt{systemd} inicia os serviços e o ambiente do usuário.
+\end{enumerate}
+
+Depois da inicialização, o comando \texttt{systemd-analyze} mostra quanto tempo cada fase do
+\textit{boot} levou: o \textit{kernel} e o espaço do usuário e, em máquinas UEFI, também o
+\textit{firmware} e o \textit{bootloader}.

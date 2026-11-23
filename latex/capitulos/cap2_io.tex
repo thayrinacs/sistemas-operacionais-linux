@@ -1,0 +1,68 @@
+% ==== Responsável: Letícia Storch ====
+\chapter{Gerenciamento de E/S (I/O)}\label{cap:io}
+
+O gerenciamento de E/S (\textit{I/O}) é a parte do sistema operacional que controla a
+comunicação entre o processador e os dispositivos, como discos, teclado, rede e vídeo. Seus
+objetivos são oferecer uma interface uniforme para os programas, esconder os detalhes do
+\textit{hardware} e coordenar o acesso concorrente \cite{tanenbaum2016}.
+
+\section{Tipos de dispositivos}\label{sec:tipos-dispositivos}
+
+Os dispositivos costumam ser classificados em dois grupos:
+
+\begin{itemize}
+    \item \textbf{dispositivos de bloco}: armazenam dados em blocos de tamanho fixo, com
+    acesso endereçável (discos e SSDs);
+    \item \textbf{dispositivos de caractere}: transferem um fluxo de bytes sem estrutura de
+    blocos (teclado, \textit{mouse}, porta serial).
+\end{itemize}
+
+No Linux, cada dispositivo é representado por um arquivo especial no diretório
+\texttt{/dev}\footnote{Lista de dispositivos do Linux. Disponível em:
+\url{https://www.kernel.org/doc/html/latest/admin-guide/devices.html}. Acesso em: 19 nov.
+2026.}, o que permite usar as mesmas chamadas de sistema (\texttt{open}, \texttt{read},
+\texttt{write}) para arquivos comuns e para \textit{hardware}. No \texttt{ls -l /dev}, a primeira
+letra das permissões mostra o tipo: \texttt{b} para dispositivos de bloco (como
+\texttt{/dev/sda}) e \texttt{c} para dispositivos de caractere (como \texttt{/dev/tty}).
+
+\section{Camadas do \textit{software} de E/S}\label{sec:camadas-es}
+
+O \textit{software} de E/S é organizado em camadas, de baixo para cima:
+
+\begin{enumerate}
+    \item tratadores de interrupção;
+    \item \textit{drivers} de dispositivo;
+    \item \textit{software} independente de dispositivo (\textit{buffering}, controle de erros,
+    alocação);
+    \item \textit{software} no espaço do usuário (bibliotecas e programas).
+\end{enumerate}
+
+Essa divisão permite trocar o \textit{hardware} sem alterar os programas, porque só o
+\textit{driver} conhece os detalhes de cada dispositivo \cite{silberschatz2015}.
+
+\section{Técnicas de transferência de dados}\label{sec:tecnicas-es}
+
+A \autoref{tab:io-tecnicas} apresenta as três técnicas clássicas.
+
+\begin{table}[H]
+    \centering
+    \caption{Técnicas de transferência de dados em E/S}
+    \label{tab:io-tecnicas}
+    \begin{tabularx}{\linewidth}{p{3.4cm}XX}
+        \toprule
+        \textbf{Técnica} & \textbf{Funcionamento} & \textbf{Desvantagem} \\
+        \midrule
+        E/S programada (\textit{polling}) & A CPU consulta repetidamente o estado do dispositivo. & Desperdiça tempo de CPU. \\
+        E/S por interrupção & O dispositivo avisa a CPU ao concluir a operação. & Cada interrupção tem custo de tratamento. \\
+        DMA & Um controlador transfere os dados direto entre o dispositivo e a memória. & Exige \textit{hardware} adicional. \\
+        \bottomrule
+    \end{tabularx}
+    \legend{Fonte: os autores (2026), com base em \citeonline{tanenbaum2016}.}
+\end{table}
+
+\section{\textit{Buffering}, \textit{cache} e \textit{spooling}}\label{sec:buffering}
+
+O \textit{buffering} usa uma área da memória para compensar a diferença de velocidade entre o
+dispositivo e o processo. O \textit{cache} guarda cópias de dados acessados com frequência. O
+\textit{spooling} enfileira trabalhos para dispositivos que atendem um processo por vez, como
+impressoras.

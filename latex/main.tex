@@ -1,0 +1,224 @@
+% =====================================================================
+%  Projeto do 2º Bimestre - Sistemas Operacionais (Prof. Jean-Rémi Bourguet)
+%  UVV - Engenharia de Software - Turma EW2M - 2026/2
+% =====================================================================
+\documentclass[12pt, a4paper, oneside, openany, chapter=TITLE, subsection=TITLE, section=TITLE, subsubsection=TITLE, subsubsubsection=TITLE, english, german, brazil]{abntex2}
+
+
+\usepackage[utf8]{inputenc}
+\usepackage[brazilian,hyperpageref]{backref}
+\usepackage{pacotes}
+
+
+\titulo{Conceitos de Sistemas Operacionais e Introdução ao Linux}
+\tituloestrangeiro{Operating Systems Concepts and Introduction to Linux}
+\autor{Kaike Costa Alves \\ Letícia Storch \\ Mariana Nunes Pignaton \\ Rhayanne Borges \\ Thayrina Cardoso Stange}
+\orientador{Prof. Jean-Rémi Bourguet}
+\data{2026}
+\instituicao{
+    Universidade Vila Velha (UVV) \par
+    Curso de Engenharia de Software \par
+    Sistemas Operacionais -- Turma EW2M
+}
+\tipotrabalho{Trabalho Acadêmico}
+\local{Vila Velha, ES}
+\preambulo{Projeto do segundo bimestre apresentado como requisito parcial para aprovação na disciplina de Sistemas Operacionais.}
+
+% informações do PDF
+\makeatletter
+\hypersetup{
+    pdftitle={\@title},
+    pdfauthor={Kaike Costa Alves, Letícia Storch, Mariana Nunes Pignaton, Rhayanne Borges, Thayrina Cardoso Stange},
+    pdfsubject={\imprimirpreambulo},
+    pdfkeywords={sistemas operacionais}{linux}{shell script},
+    pdfcreator={LaTeX with abnTeX2},
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+    }
+\makeatother
+\setlength{\absparsep}{18pt} % ajusta o espaçamento dos parágrafos do resumo
+
+\begin{document}
+\pretextual
+\imprimircapa
+\imprimirfolhaderosto[]*
+\makeatother\clearpage
+
+% ---------- Epígrafe ----------
+\begin{epigrafe}
+    \vspace*{\fill}
+    \begin{flushright}
+        \textit{``The nice thing about standards is that you have so many to choose from.''}\\
+        (Andrew S. Tanenbaum)
+    \end{flushright}
+\end{epigrafe}
+\clearpage
+
+\begin{resumo}[Resumo]
+    Este trabalho reúne os sete últimos capítulos da disciplina de Sistemas Operacionais e a
+    aplicação prática desses conceitos no sistema GNU/Linux. Na primeira parte são descritos o
+    processo de \textit{boot}, o gerenciamento de entrada e saída, a memória secundária e as
+    partições, o gerenciamento de arquivos nos sistemas de arquivos, o controle de grupos,
+    usuários e permissões, o gerenciamento de processos e o gerenciamento da memória
+    primária. Na segunda parte são resolvidos dez exercícios dos capítulos 6 (\textit{Shell}) e 7
+    (\textit{Shell Script}) do livro \textit{Introdução ao Linux} \cite{peixoto2013}, com capturas de
+    tela do terminal e explicações de cada comando e \textit{script} utilizado. \\
+    \vspace{\onelineskip}
+    \noindent
+    \textbf{Palavras-chave}: sistemas operacionais. Linux. shell script. processos. memória.
+\end{resumo}
+
+\begin{resumo}[Abstract]
+    \begin{otherlanguage*}{english}
+    This work presents the last seven chapters of the Operating Systems course and applies
+    these concepts to the GNU/Linux system. The first part describes the boot process,
+    input/output management, secondary memory and partitions, file management in file
+    systems, groups, users and permissions, process management and primary memory
+    management. The second part solves ten exercises from chapters 6 (Shell) and 7 (Shell
+    Script) of the book \textit{Introdução ao Linux} \cite{peixoto2013}, with terminal screenshots
+    and explanations of each command and script. \\
+    \vspace{\onelineskip}
+    \noindent
+    \textbf{Keywords}: operating systems. Linux. shell script. processes. memory.
+    \end{otherlanguage*}
+\end{resumo}
+
+
+\pdfbookmark[0]{\listfigurename}{lof}
+\listoffigures*
+\clearpage
+
+\pdfbookmark[0]{\listtablename}{lot}
+\listoftables*
+\clearpage
+
+\pdfbookmark[0]{\lstlistlistingname}{lol}
+\renewcommand{\lstlistlistingname}{Lista de códigos}
+\lstlistoflistings
+\clearpage
+
+\begin{siglas}
+    \item[BIOS] \textit{Basic Input/Output System}
+    \item[CPU] \textit{Central Processing Unit} (Unidade Central de Processamento)
+    \item[DMA] \textit{Direct Memory Access} (Acesso Direto à Memória)
+    \item[E/S] Entrada e Saída (\textit{I/O})
+    \item[ESP] \textit{EFI System Partition} (Partição de Sistema EFI)
+    \item[FAT] \textit{File Allocation Table}
+    \item[FIFO] \textit{First In, First Out}
+    \item[FS] \textit{File System} (Sistema de Arquivos)
+    \item[GID] \textit{Group Identifier} (Identificador de Grupo)
+    \item[GPT] \textit{GUID Partition Table}
+    \item[GRUB] \textit{GRand Unified Bootloader}
+    \item[HD] \textit{Hard Disk} (Disco Rígido)
+    \item[LRU] \textit{Least Recently Used}
+    \item[MBR] \textit{Master Boot Record}
+    \item[MMU] \textit{Memory Management Unit} (Unidade de Gerenciamento de Memória)
+    \item[NTFS] \textit{New Technology File System}
+    \item[PCB] \textit{Process Control Block} (Bloco de Controle de Processo)
+    \item[PID] \textit{Process Identifier} (Identificador de Processo)
+    \item[POST] \textit{Power-On Self Test} (Autoteste ao Ligar)
+    \item[PPID] \textit{Parent Process Identifier} (Identificador do Processo-Pai)
+    \item[RAM] \textit{Random Access Memory}
+    \item[RR] \textit{Round-Robin}
+    \item[SSD] \textit{Solid State Drive} (Unidade de Estado Sólido)
+    \item[TLB] \textit{Translation Lookaside Buffer}
+    \item[UEFI] \textit{Unified Extensible Firmware Interface}
+    \item[UID] \textit{User Identifier} (Identificador de Usuário)
+\end{siglas}
+
+\pdfbookmark[0]{\contentsname}{toc}
+\tableofcontents*
+\clearpage
+
+
+\textual % a partir daqui são os elementos textuais.
+
+\chapter*[Introdução]{Introdução}
+\addcontentsline{toc}{chapter}{Introdução}
+
+O sistema operacional é a camada de \textit{software} que gerencia o \textit{hardware} e oferece
+serviços aos programas \cite{tanenbaum2016}. Este trabalho está organizado em duas partes.
+A Parte~\ref{parte:conceitos} descreve os sete capítulos finais da disciplina, do
+\autoref{cap:boot} ao \autoref{cap:memoria}. A Parte~\ref{parte:linux} apresenta a resolução
+dos exercícios do livro de \citeonline{peixoto2013}, com capturas de tela do terminal.
+A divisão das tarefas entre os integrantes está na \autoref{tab:divisao}.
+
+\begin{table}[H]
+    \centering
+    \caption{Divisão das tarefas entre os integrantes}
+    \label{tab:divisao}
+    \begin{tabularx}{\linewidth}{lX}
+        \toprule
+        \textbf{Integrante} & \textbf{Responsabilidade} \\
+        \midrule
+        Letícia Storch   & Capítulos 1 e 2; Atividades 6.1 e 6.2 \\
+        Mariana Nunes Pignaton & Capítulos 3 e 4 \\
+        Kaike Costa Alves & Capítulo 5; Atividades 6.3, 6.4, 6.8, 6.9 e 6.10 \\
+        Rhayanne Borges  & Capítulos 6 e 7; Atividade 7.6 \\
+        Thayrina Cardoso Stange & Atividades 7.9 e 7.11; montagem e revisão do documento \\
+        \bottomrule
+    \end{tabularx}
+    \legend{Fonte: os autores (2026).}
+\end{table}
+
+% ---------------------------------------------------------------------
+\part{Conceitos de Sistemas Operacionais}\label{parte:conceitos}
+% ---------------------------------------------------------------------
+\include{capitulos/cap1_boot}
+\include{capitulos/cap2_io}
+\include{capitulos/cap3_memoria_secundaria}
+\include{capitulos/cap4_arquivos}
+\include{capitulos/cap5_permissoes}
+\include{capitulos/cap6_processos}
+\include{capitulos/cap7_memoria_primaria}
+
+% ---------------------------------------------------------------------
+\part{Introdução ao Linux}\label{parte:linux}
+% ---------------------------------------------------------------------
+\include{capitulos/linux_cap6_shell}
+\include{capitulos/linux_cap7_shellscript}
+
+\chapter*[Conclusão]{Conclusão}
+\addcontentsline{toc}{chapter}{Conclusão}
+
+O trabalho mostrou como os conceitos teóricos de sistemas operacionais aparecem no uso
+diário do Linux. O processo de \textit{boot}, o gerenciamento de dispositivos, partições,
+arquivos, permissões, processos e memória podem ser observados e controlados pelo
+terminal. Os \textit{scripts} desenvolvidos na segunda parte mostram que o \textit{shell}
+também é uma linguagem de programação, capaz de automatizar tarefas de administração
+do sistema com estruturas condicionais, expressões regulares e menus interativos.
+
+
+\postextual % a partir daqui são os elementos pós-textuais.
+\bibliography{referencias}
+
+% ---------- Glossário ----------
+\chapter*[Glossário]{Glossário}
+\addcontentsline{toc}{chapter}{Glossário}
+\begin{description}[style=nextline, leftmargin=1cm]
+    \item[\textit{Background}] Execução de um processo em segundo plano, sem bloquear o \textit{shell}; é feita colocando \texttt{\&} no final do comando.
+    \item[\textit{Bash}] Interpretador de comandos (\textit{shell}) padrão da maioria das distribuições Linux.
+    \item[\textit{Bootloader}] Programa que carrega o \textit{kernel} na memória durante o \textit{boot}, como o GRUB.
+    \item[\textit{Case}] Estrutura de seleção do \textit{shell} que compara um valor com vários padrões e executa o bloco correspondente.
+    \item[\textit{Cron}] \textit{Daemon} do Linux que executa tarefas agendadas nos horários definidos na \textit{crontab} de cada usuário.
+    \item[\textit{Daemon}] Processo que roda em segundo plano o tempo todo, sem estar ligado a um terminal, prestando um serviço ao sistema.
+    \item[DMA] Transferência de dados entre o dispositivo e a memória feita por um controlador, sem passar pela CPU.
+    \item[\textit{Driver}] \textit{Software} que permite ao sistema operacional controlar um dispositivo específico.
+    \item[Escalonador] Parte do sistema operacional que decide qual processo da fila de prontos vai usar a CPU.
+    \item[Expressão regular] Padrão de texto formado por caracteres e metacaracteres, usado para buscar ou validar cadeias de caracteres.
+    \item[Falta de página] Interrupção gerada quando um processo acessa uma página que não está na memória principal.
+    \item[\textit{Journaling}] Técnica em que o sistema de arquivos registra as alterações num diário antes de gravá-las, para se recuperar de desligamentos inesperados.
+    \item[Montagem] Ligação de um sistema de arquivos a um diretório da árvore do Linux, chamado ponto de montagem.
+    \item[Paginação] Técnica que divide a memória física em quadros e o espaço lógico em páginas do mesmo tamanho, permitindo que um processo ocupe quadros não contíguos.
+    \item[Partição] Divisão lógica de um disco, tratada pelo sistema operacional como uma unidade independente.
+    \item[Permissão] Direito de leitura (\texttt{r}), escrita (\texttt{w}) ou execução (\texttt{x}) dado ao dono, ao grupo e aos demais usuários de um arquivo.
+    \item[POST] Teste automático do \textit{hardware} feito pelo \textit{firmware} logo que o computador é ligado.
+    \item[Processo] Programa em execução, com seu próprio contexto (registradores, pilha, memória e estado).
+    \item[\textit{Root}] Usuário administrador do Linux (UID 0), sem restrições de acesso.
+    \item[\textit{Script}] Arquivo de texto com uma sequência de comandos executados pelo interpretador.
+    \item[Sistema de arquivos] Estrutura que organiza os dados de um dispositivo em arquivos e diretórios, como o ext4 e o NTFS.
+\end{description}
+
+\end{document}

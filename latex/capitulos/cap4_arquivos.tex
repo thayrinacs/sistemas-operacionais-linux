@@ -1,0 +1,89 @@
+% ==== Responsável: Mariana Nunes Pignaton ====
+\chapter{Gerenciamento de arquivos em sistemas de arquivos}\label{cap:arquivos}
+
+Um sistema de arquivos (\textit{File System}, FS) organiza, armazena e dá acesso aos dados
+gravados em um dispositivo de armazenamento. Ele define como os arquivos são identificados,
+organizados em diretórios e recuperados pelo sistema operacional. Sem ele, o disco seria só
+uma sequência de blocos sem significado \cite{tanenbaum2016}.
+
+\section{Principais sistemas de arquivos}\label{sec:principais-fs}
+
+Cada sistema de arquivos tem características próprias, resumidas na \autoref{tab:fs}.
+
+\begin{table}[H]
+    \centering
+    \caption{Comparação entre sistemas de arquivos comuns}
+    \label{tab:fs}
+    \begin{tabularx}{\linewidth}{lX}
+        \toprule
+        \textbf{Sistema} & \textbf{Características} \\
+        \midrule
+        FAT32 & Compatível com quase todos os dispositivos, mas limita cada arquivo a 4\,GB. \\
+        exFAT & Feito para \textit{pendrives} e cartões de memória, sem o limite de 4\,GB do FAT32. \\
+        NTFS & Padrão do Windows, com permissões, criptografia e suporte a arquivos grandes. \\
+        ext4 & Padrão da maioria das distribuições Linux, com \textit{journaling} e bom desempenho. \\
+        \bottomrule
+    \end{tabularx}
+    \legend{Fonte: os autores (2026).}
+\end{table}
+
+O \textit{journaling} do ext4\footnote{Documentação do ext4 no \textit{kernel} Linux.
+Disponível em: \url{https://docs.kernel.org/filesystems/ext4/}. Acesso em: 20 nov. 2026.}
+registra as alterações num diário antes de gravá-las. Se o
+computador desligar no meio de uma escrita, o sistema consegue recuperar um estado consistente
+sem verificar o disco inteiro \cite{silberschatz2015}.
+
+\section{Organização de diretórios no Linux}\label{sec:diretorios}
+
+No Linux, os arquivos ficam numa árvore de diretórios que começa na raiz, representada por uma
+barra (\texttt{/}). Não existem letras de unidade como no Windows: outros discos e partições
+aparecem como diretórios dentro dessa mesma árvore. Os principais diretórios são:
+
+\begin{itemize}
+    \item \texttt{/home}: arquivos pessoais dos usuários;
+    \item \texttt{/etc}: arquivos de configuração do sistema;
+    \item \texttt{/bin}: comandos essenciais;
+    \item \texttt{/var}: arquivos que mudam com frequência, como os \textit{logs};
+    \item \texttt{/tmp}: arquivos temporários;
+    \item \texttt{/root}: diretório pessoal do administrador;
+    \item \texttt{/dev}: arquivos que representam os dispositivos (ver \autoref{cap:io});
+    \item \texttt{/boot}: arquivos usados na inicialização, como o \textit{kernel}
+    (ver \autoref{cap:boot}).
+\end{itemize}
+
+\section{Operações com arquivos e diretórios}\label{sec:operacoes-arquivos}
+
+O \autoref{lst:arquivos} reúne os comandos básicos para manipular arquivos e diretórios pelo
+terminal.
+
+\begin{lstlisting}[caption={Comandos básicos de manipulação de arquivos},label={lst:arquivos}]
+ls -la                         # lista tudo, inclusive ocultos, com detalhes
+mkdir documentos               # cria um diretorio
+touch arquivo.txt              # cria um arquivo vazio
+cp arquivo.txt copia.txt       # copia
+mv arquivo.txt documentos/     # move (ou renomeia)
+rm copia.txt                   # apaga um arquivo
+rmdir documentos               # apaga um diretorio vazio
+\end{lstlisting}
+
+\section{Caminhos absolutos e relativos}\label{sec:caminhos}
+
+O \textbf{caminho absoluto} indica a localização completa a partir da raiz, como
+\texttt{/home/usuario/documentos/arquivo.txt}. O \textbf{caminho relativo} parte do diretório
+em que o usuário está: estando em \texttt{/home/usuario}, o mesmo arquivo é
+\texttt{documentos/arquivo.txt}. Os atalhos \texttt{.} (diretório atual), \texttt{..}
+(diretório pai) e \texttt{\textasciitilde} (diretório pessoal) também são usados nos caminhos.
+
+\section{Montagem de sistemas de arquivos}\label{sec:montagem}
+
+A montagem é o processo de ligar um sistema de arquivos a um diretório da árvore, chamado
+ponto de montagem. O comando \texttt{mount} faz a montagem e o \texttt{umount}, a desmontagem:
+
+\begin{lstlisting}[caption={Montagem e desmontagem de uma partição},label={lst:mount}]
+sudo mount /dev/sdb1 /mnt      # monta a particao sdb1 em /mnt
+sudo umount /mnt               # desmonta
+\end{lstlisting}
+
+As partições montadas automaticamente no \textit{boot} ficam listadas no arquivo
+\texttt{/etc/fstab}. Além de organizar os dados, o sistema de arquivos também guarda o dono, o
+grupo e as permissões de cada arquivo, assunto do \autoref{cap:permissoes}.

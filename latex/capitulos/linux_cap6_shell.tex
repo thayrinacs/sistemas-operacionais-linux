@@ -1,0 +1,169 @@
+\chapter{\textit{Shell} (Capítulo 6 do livro)}\label{cap:linux6}
+
+Os exercícios a seguir são do capítulo 6 de \citeonline{peixoto2013}. Em cada captura de tela,
+o \textit{prompt} mostra o nome do integrante que executou a atividade.
+
+% ==== Atividades 6.1 e 6.2: Letícia Storch ====
+\section{Atividade 6.1: exibindo processos em estados específicos}\label{sec:a61}
+
+\textbf{Enunciado:} pesquisar as opções do comando \texttt{ps} e criar um comando que liste
+apenas os identificadores e os nomes dos processos que estão no estado R (\textit{running}).
+Verificar também o comando \texttt{top}, uma versão interativa do \texttt{ps} que atualiza a
+listagem a cada $n$ segundos e ordena os processos por uso de CPU e de memória.
+
+\textbf{Resolução:} o comando \texttt{ps} lista os processos, e a opção \texttt{-e} seleciona
+todos eles. Com \texttt{-o}, escolhemos as colunas exibidas: \texttt{pid} (identificador),
+\texttt{comm} (nome do comando) e \texttt{stat} (estado). A opção \texttt{-{}-no-headers} tira a
+linha de título. O resultado é enviado por um \textit{pipe} (\texttt{|}) ao \texttt{awk}, que
+mantém só as linhas cujo terceiro campo começa com a letra \texttt{R} e imprime o PID e o nome
+(\autoref{lst:a61}).
+
+\begin{lstlisting}[caption={Atividade 6.1: processos no estado R e \texttt{top}},label={lst:a61}]
+ps -eo pid,comm,stat --no-headers | awk '$3 ~ /^R/ {print $1, $2}'
+top -d 5
+\end{lstlisting}
+
+Na \autoref{fig:a61}, os únicos processos no estado R são o próprio \texttt{ps} e o
+\texttt{awk}: eles estão usando a CPU no momento da consulta, enquanto todos os outros estão
+dormindo (estado S), esperando algum evento. O \texttt{top -d 5} mostra a mesma informação de
+forma contínua, atualizando a tela a cada 5 segundos. No cabeçalho aparecem o total de
+processos (26, sendo 1 em execução e 25 dormindo), o uso de CPU e o uso de memória e de
+\textit{swap}. Dentro do programa, a tecla \texttt{P} ordena por uso de CPU, \texttt{M} ordena
+por uso de memória e \texttt{q} encerra o \texttt{top}.
+
+\printterminal{atividade6_1.jpg}{Atividade 6.1: processos no estado R e uso do \texttt{top}}{fig:a61}
+
+\section{Atividade 6.2: processos em \textit{background}}\label{sec:a62}
+
+\textbf{Enunciado:} a partir do \textit{shell}, executar um programa em \textit{background}.
+Observar a árvore hierárquica de processos e as dependências entre eles, observar o PID e o
+PPID e comparar com os do \texttt{bash}. Verificar também o comando \texttt{jobs}, que mostra a
+situação dos processos em \textit{background} naquele \textit{shell}.
+
+\textbf{Resolução:} colocar o caractere \texttt{\&} no final do comando faz o \textit{shell}
+executá-lo em \textit{background} e devolver o \textit{prompt} na hora. Como programa, foi usado
+o \texttt{sleep 300}, que só espera 300 segundos, executado duas vezes. Os comandos estão no
+\autoref{lst:a62}.
+
+\begin{lstlisting}[caption={Atividade 6.2: processos em \textit{background}},label={lst:a62}]
+sleep 300 &            # executa o sleep em background
+echo $$                # PID do bash atual
+ps -o pid,ppid,comm    # PID e PPID dos processos deste terminal
+pstree -p $$           # árvore de processos a partir do bash
+jobs -l                # processos em background deste shell
+\end{lstlisting}
+
+Ao iniciar o processo, o \textit{shell} mostra o número do \textit{job} entre colchetes e o PID
+(\texttt{[2] 1037}). A variável especial \texttt{\$\$} guarda o PID do próprio \textit{shell}:
+794. Na saída do \texttt{ps} da \autoref{fig:a62}, os dois \texttt{sleep} (PIDs 979 e 1037) e
+o próprio \texttt{ps} têm PPID 794, ou seja, o \texttt{bash} é o processo-pai de todos eles. O
+\texttt{pstree -p \$\$} desenha essa mesma dependência como uma árvore, com o \texttt{bash(794)}
+na raiz. Por fim, o \texttt{jobs -l} lista os dois \textit{jobs} com número, PID, estado
+(\textit{Running}) e comando. O sinal \texttt{+} marca o \textit{job} mais recente, e o
+\texttt{-}, o anterior.
+
+\printterminal{atividade6_2.jpg}{Atividade 6.2: PID, PPID, \texttt{pstree} e \texttt{jobs}}{fig:a62}
+
+% ==== Atividades 6.3 e 6.4: Kaike Costa Alves ====
+\section{Atividade 6.3: utilizando um \textit{daemon}}\label{sec:a63}
+
+\textbf{Enunciado:} usar o \textit{daemon} \texttt{cron} para fazer, daqui a cinco minutos, um
+\textit{backup} dos arquivos \texttt{.log} da pasta \texttt{/var/log}. O arquivo de
+\textit{backup} deve ser compactado e colocado dentro da pasta do usuário, usando
+\texttt{crontab -e} e \texttt{tar -zcvf destino origem}.
+
+\textbf{Resolução:} um \textit{daemon} é um processo que roda em segundo plano o tempo todo,
+sem estar ligado a um terminal. O \texttt{cron} verifica a cada minuto a tabela de tarefas de
+cada usuário (a \textit{crontab}) e executa as que estão programadas para aquele horário. Cada
+linha da \textit{crontab} tem cinco campos de tempo (minuto, hora, dia do mês, mês e dia da
+semana) seguidos do comando.
+
+Para descobrir o horário de daqui a cinco minutos, foi usado o \texttt{date} com a opção
+\texttt{-d}, que calcula datas relativas, e o formato \texttt{+\%M \%H}, que imprime só o
+minuto e a hora na mesma ordem dos campos da \textit{crontab}. Em seguida, a tarefa foi
+adicionada com \texttt{crontab -e} e conferida com \texttt{crontab -l} (\autoref{lst:a63}).
+
+\begin{lstlisting}[caption={Atividade 6.3: tarefa agendada no \texttt{cron}},label={lst:a63}]
+date -d "+5 minutes" "+%M %H"      # minuto e hora daqui a 5 minutos
+crontab -e                         # edita a tabela de tarefas
+crontab -l                         # lista as tarefas agendadas
+# linha adicionada na crontab:
+06 15 * * * tar -zcvf /home/kaike_alves/backup_logs.tar.gz /var/log/*.log
+\end{lstlisting}
+
+A linha \texttt{06 15 * * *} faz o \texttt{cron} executar o \texttt{tar} às 15h06. No
+\texttt{tar}, a opção \texttt{-z} compacta com \texttt{gzip}, \texttt{-c} cria o arquivo,
+\texttt{-v} mostra os arquivos processados e \texttt{-f} indica o nome do arquivo de destino.
+Na última linha da \autoref{fig:a63}, o \texttt{ls -lh} confirma que o arquivo
+\texttt{backup\_logs.tar.gz}, com 18\,KB, foi criado às 15:06, exatamente no horário agendado.
+
+\printterminal{atividade6_3.png}{Atividade 6.3: \textit{backup} agendado com o \texttt{cron}}{fig:a63}
+
+\section{Atividade 6.4: usando testes dentro dos \textit{scripts}}\label{sec:a64}
+
+\textbf{Enunciado:} criar um \textit{script} que mostra o usuário atual, o diretório atual e o
+\textit{shell} em uso. O livro lembra que o arquivo \texttt{/etc/passwd} lista os usuários e
+os seus \textit{shells} e sugere o comando \texttt{cut -d DELIMITADOR -f NUMERO\_DO\_CAMPO}.
+
+\textbf{Resolução:} o usuário atual pode ser obtido com \texttt{whoami} (ou com a variável
+\texttt{\$USER}), e o diretório atual com \texttt{pwd}. Para o \textit{shell}, cada linha do
+\texttt{/etc/passwd} tem sete campos separados por dois-pontos, e o sétimo é o \textit{shell} de
+\textit{login} do usuário. Assim, \texttt{grep \^{}\$USER: /etc/passwd | cut -d: -f7} busca
+a linha do usuário e corta só o sétimo campo. Depois de dar permissão de execução com
+\texttt{chmod +x}, o \textit{script} foi executado (\autoref{fig:a64}): o usuário é
+\texttt{kaike\_alves}, o diretório é \texttt{/home/kaike\_alves} e o \textit{shell} é o
+\texttt{/usr/bin/zsh}.
+
+\printterminal{atividade6_4.png}{Atividade 6.4: usuário, diretório e \textit{shell} atuais}{fig:a64}
+
+% ==== Atividades 6.8, 6.9 e 6.10: Kaike Costa Alves ====
+\section{Atividade 6.8: utilizando parâmetros e testes}\label{sec:a68}
+
+\textbf{Enunciado:} criar um \textit{script} que verifica se recebeu exatamente um parâmetro na
+linha de comando, usando o comando \texttt{test} e saindo com \texttt{exit} se o número de
+parâmetros estiver errado. O número de parâmetros fica na variável \texttt{\$\#}.
+
+\textbf{Resolução:} o \textit{script} testa a condição \texttt{test \$\# -ne 1} (ou
+\texttt{[ \$\# -ne 1 ]}). Se ela for verdadeira, mostra uma mensagem de uso e termina com
+\texttt{exit 1}; se for falsa, mostra o parâmetro recebido, guardado em \texttt{\$1}.
+
+A \autoref{fig:a68} mostra também um erro comum: na primeira tentativa, o \textit{shell}
+respondeu \texttt{permission denied}, porque o arquivo criado com o \texttt{nano} ainda não
+tinha permissão de execução (\autoref{cap:permissoes}). Depois do \texttt{chmod +x}, o
+\textit{script} rodou e mostrou \texttt{Parametro recebido: teste}.
+
+\printterminal{atividade6_8.png}{Atividade 6.8: \textit{script} com teste do número de parâmetros}{fig:a68}
+
+\section{Atividade 6.9: utilizando testes de diretório}\label{sec:a69}
+
+\textbf{Enunciado:} continuar a atividade anterior para verificar se o parâmetro é um
+diretório e avisar o usuário se é ou não, usando o teste \texttt{[[ -d \$1 ]]}.
+
+\textbf{Resolução:} o operador \texttt{-d} retorna verdadeiro (código de saída 0, guardado em
+\texttt{\$?}) quando o caminho existe e é um diretório. O \textit{script} mantém o teste de
+\texttt{\$\#} da Atividade 6.8 e, em seguida, usa um \texttt{if} com \texttt{[[ -d \$1 ]]} para
+escolher a mensagem. Na \autoref{fig:a69}, a execução com \texttt{/home} mostra
+\texttt{O parametro e um diretorio.}
+
+\printterminal{atividade6_9.png}{Atividade 6.9: teste de diretório com \texttt{-d}}{fig:a69}
+
+\section{Atividade 6.10: listando arquivos passados por parâmetro}\label{sec:a610}
+
+\textbf{Enunciado:} continuar a atividade anterior para receber dois parâmetros, um diretório e
+uma letra. Se o primeiro parâmetro for um diretório, o \textit{script} deve listar todos os
+arquivos que começam com a letra recebida no segundo parâmetro, usando \texttt{ls \$2*}.
+
+\textbf{Resolução:} agora o teste passa a ser \texttt{[ \$\# -ne 2 ]}. Se \texttt{\$1} for um
+diretório, o \textit{script} entra nele e executa \texttt{ls \$2*}. O \textit{shell} expande o
+padrão \texttt{\$2*} (por exemplo, \texttt{a*}) para todos os nomes que começam com aquela
+letra antes de chamar o \texttt{ls}.
+
+Na \autoref{fig:a610} aparecem dois casos. Com \texttt{/home a}, o \texttt{ls} responde
+\texttt{cannot access 'a*'}: não existe nenhum arquivo começando com ``a'' em \texttt{/home}, que
+só tem a pasta do usuário. Quando o padrão não encontra nada, o \textit{shell} passa o texto
+\texttt{a*} literalmente ao \texttt{ls}, que não acha um arquivo com esse nome. O \texttt{X}
+vermelho no \textit{prompt} seguinte indica que o último comando terminou com erro. Com
+\texttt{/usr/bin a}, o \textit{script} lista todos os programas desse diretório que começam com
+``a'', como \texttt{apt}, \texttt{awk} e \texttt{arch}.
+
+\printterminal{atividade6_10.png}{Atividade 6.10: arquivos de um diretório que começam com uma letra}{fig:a610}
